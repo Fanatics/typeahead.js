@@ -1,7 +1,7 @@
 /*!
  * typeahead.js 0.11.1
  * https://github.com/twitter/typeahead.js
- * Copyright 2013-2015 Twitter, Inc. and other contributors; Licensed MIT
+ * Copyright 2013-2016 Twitter, Inc. and other contributors; Licensed MIT
  */
 
 (function(root, factory) {
@@ -1087,7 +1087,8 @@
             empty: "tt-empty",
             open: "tt-open",
             cursor: "tt-cursor",
-            highlight: "tt-highlight"
+            highlight: "tt-highlight",
+            tabComplete: "tt-complete"
         };
         return build;
         function build(o) {
@@ -1590,6 +1591,7 @@
             www.mixin(this);
             this.highlight = !!o.highlight;
             this.name = o.name || nameGenerator();
+            this.clickTabComplete = !!o.clickTabComplete;
             this.limit = o.limit || 5;
             this.displayFn = getDisplayFn(o.display || o.displayKey);
             this.templates = getTemplates(o.templates, this.displayFn);
@@ -1673,6 +1675,9 @@
                     var $el, context;
                     context = that._injectQuery(query, suggestion);
                     $el = $(that.templates.suggestion(context)).data(keys.obj, suggestion).data(keys.val, that.displayFn(suggestion)).addClass(that.classes.suggestion + " " + that.classes.selectable);
+                    if (that.clickTabComplete) {
+                        $el.append($("<span>").addClass(that.classes.tabComplete));
+                    }
                     fragment.appendChild($el[0]);
                 });
                 this.highlight && highlight({
@@ -1793,7 +1798,11 @@
         }
         _.mixin(Menu.prototype, EventEmitter, {
             _onSelectableClick: function onSelectableClick($e) {
-                this.trigger("selectableClicked", $($e.currentTarget));
+                if ($($e.target).hasClass(this.classes.tabComplete)) {
+                    this.trigger("tabComplete", $($e.currentTarget));
+                } else {
+                    this.trigger("selectableClicked", $($e.currentTarget));
+                }
             },
             _onRendered: function onRendered(type, dataset, suggestions, async) {
                 this.$node.toggleClass(this.classes.empty, this._allDatasetsEmpty());
@@ -1983,7 +1992,7 @@
             this.input.hasFocus() && this.activate();
             this.dir = this.input.getLangDir();
             this._hacks();
-            this.menu.bind().onSync("selectableClicked", this._onSelectableClicked, this).onSync("asyncRequested", this._onAsyncRequested, this).onSync("asyncCanceled", this._onAsyncCanceled, this).onSync("asyncReceived", this._onAsyncReceived, this).onSync("datasetRendered", this._onDatasetRendered, this).onSync("datasetCleared", this._onDatasetCleared, this);
+            this.menu.bind().onSync("tabComplete", this._tabCompleted, this).onSync("selectableClicked", this._onSelectableClicked, this).onSync("asyncRequested", this._onAsyncRequested, this).onSync("asyncCanceled", this._onAsyncCanceled, this).onSync("asyncReceived", this._onAsyncReceived, this).onSync("datasetRendered", this._onDatasetRendered, this).onSync("datasetCleared", this._onDatasetCleared, this);
             onFocused = c(this, "activate", "open", "_onFocused");
             onBlurred = c(this, "deactivate", "_onBlurred");
             onEnterKeyed = c(this, "isActive", "isOpen", "_onEnterKeyed");
@@ -2059,6 +2068,13 @@
                 } else if ($selectable = this.menu.getTopSelectable()) {
                     this.autocomplete($selectable) && $e.preventDefault();
                 }
+            },
+            _tabCompleted: function(type, $e) {
+                var data = this.menu.getSelectableData($e);
+                if (data) {
+                    this.input.setQuery(data.val, false);
+                }
+                return false;
             },
             _onEscKeyed: function onEscKeyed() {
                 this.close();

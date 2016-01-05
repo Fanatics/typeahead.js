@@ -43,7 +43,11 @@ var Menu = (function() {
     // ### event handlers
 
     _onSelectableClick: function onSelectableClick($e) {
-      this.trigger('selectableClicked', $($e.currentTarget));
+        if($($e.target).hasClass(this.classes.tabComplete)) {
+            this.trigger('tabComplete', $($e.currentTarget));
+        } else {
+            this.trigger('selectableClicked', $($e.currentTarget));
+        }
     },
 
     _onRendered: function onRendered(type, dataset, suggestions, async) {

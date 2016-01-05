@@ -42,6 +42,7 @@ var Dataset = (function() {
 
     this.highlight = !!o.highlight;
     this.name = o.name || nameGenerator();
+    this.clickTabComplete = !!o.clickTabComplete;
 
     this.limit = o.limit || 5;
     this.displayFn = getDisplayFn(o.display || o.displayKey);
@@ -192,6 +193,10 @@ var Dataset = (function() {
         .data(keys.obj, suggestion)
         .data(keys.val, that.displayFn(suggestion))
         .addClass(that.classes.suggestion + ' ' + that.classes.selectable);
+
+        if(that.clickTabComplete) {
+            $el.append($('<span>').addClass(that.classes.tabComplete));
+        }
 
         fragment.appendChild($el[0]);
       });

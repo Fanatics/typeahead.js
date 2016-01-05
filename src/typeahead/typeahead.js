@@ -49,6 +49,7 @@ var Typeahead = (function() {
     this._hacks();
 
     this.menu.bind()
+    .onSync('tabComplete', this._tabCompleted, this)
     .onSync('selectableClicked', this._onSelectableClicked, this)
     .onSync('asyncRequested', this._onAsyncRequested, this)
     .onSync('asyncCanceled', this._onAsyncCanceled, this)
@@ -176,6 +177,16 @@ var Typeahead = (function() {
       else if ($selectable = this.menu.getTopSelectable()) {
         this.autocomplete($selectable) && $e.preventDefault();
       }
+    },
+
+    _tabCompleted: function(type, $e) {
+        var data = this.menu.getSelectableData($e);
+
+        if (data) {
+          this.input.setQuery(data.val, false);
+        }
+
+        return false;
     },
 
     _onEscKeyed: function onEscKeyed() {

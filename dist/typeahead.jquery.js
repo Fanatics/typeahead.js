@@ -669,6 +669,7 @@
             this.highlight = !!o.highlight;
             this.name = o.name || nameGenerator();
             this.clickTabComplete = !!o.clickTabComplete;
+            this.asyncOnly = !!o.asyncOnly;
             this.limit = o.limit || 5;
             this.displayFn = getDisplayFn(o.display || o.displayKey);
             this.templates = getTemplates(o.templates, this.displayFn);
@@ -795,7 +796,7 @@
                     that.async && that.trigger("asyncCanceled", query);
                 };
                 this.source(query, sync, async);
-                !syncCalled && sync([]);
+                !this.asyncOnly && !syncCalled && sync([]);
                 function sync(suggestions) {
                     if (syncCalled) {
                         return;
@@ -812,8 +813,13 @@
                     suggestions = suggestions || [];
                     if (!canceled && rendered < that.limit) {
                         that.cancel = $.noop;
-                        that._append(query, suggestions.slice(0, that.limit - rendered));
-                        rendered += suggestions.length;
+                        if (that.asyncOnly) {
+                            that._overwrite(query, suggestions);
+                            rendered = suggestions.length;
+                        } else {
+                            that._append(query, suggestions.slice(0, that.limit - rendered));
+                            rendered += suggestions.length;
+                        }
                         that.async && that.trigger("asyncReceived", query);
                     }
                 }
